@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE repositories SYSTEM "/dtd/repositories.dtd">
+<repositories version="1.0">
+  <repo quality="experimental" status="unofficial">
+    <name>nvsofts-overlay</name>
+    <description>NV's overlay</description>
+    <homepage>http://j-ynv.net/</homepage>
+    <owner>
+      <email>nvsofts@gmail.com</email>
+      <name>NV</name>
+    </owner>
+    <source type="git">https://github.com/nvsofts/my-overlay.git</source>
+  </repo>
+</repositories>
