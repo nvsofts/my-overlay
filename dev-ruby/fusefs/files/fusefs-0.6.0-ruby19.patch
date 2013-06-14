@@ -1,0 +1,73 @@
+--- fusefs-0.6.0_orig/ext/fusefs_lib.c	2005-12-23 12:27:26.000000000 +0900
++++ fusefs-0.6.0/ext/fusefs_lib.c	2012-01-05 17:57:55.369839278 +0900
+@@ -453,7 +453,7 @@
+     if (TYPE(cur_entry) != T_STRING)
+       continue;
+ 
+-    filler(buf,STR2CSTR(cur_entry),NULL,0);
++    filler(buf,StringValuePtr(cur_entry),NULL,0);
+   }
+   return 0;
+ }
+@@ -661,7 +661,8 @@
+     /* We have the body, now save it the entire contents to our
+      * opened_file lists. */
+     newfile = ALLOC(opened_file);
+-    value = rb_str2cstr(body,&newfile->size);
++    value = StringValuePtr(body);
++    newfile->size = RSTRING_LEN(body);
+     newfile->value = ALLOC_N(char,(newfile->size)+1);
+     memcpy(newfile->value,value,newfile->size);
+     newfile->value[newfile->size] = '\0';
+@@ -716,7 +717,8 @@
+       /* We have the body, now save it the entire contents to our
+        * opened_file lists. */
+       newfile = ALLOC(opened_file);
+-      value = rb_str2cstr(body,&newfile->size);
++      value = StringValuePtr(body);
++      newfile->size = RSTRING_LEN(body);
+       newfile->value = ALLOC_N(char,(newfile->size)+1);
+       memcpy(newfile->value,value,newfile->size);
+       newfile->writesize = newfile->size+1;
+@@ -1075,7 +1077,8 @@
+       rf_call(path,id_write_to,newstr);
+     } else {
+       long size;
+-      char *str = rb_str2cstr(body,&size);
++      char *str = StringValuePtr(body);
++      size = RSTRING_LEN(body);
+ 
+       /* Just in case offset is bigger than the file. */
+       if (offset >= size) return 0;
+@@ -1254,8 +1257,8 @@
+       return 0;
+     if (TYPE(ret) != T_STRING)
+       return 0;
+-    memcpy(buf, RSTRING(ret)->ptr, RSTRING(ret)->len);
+-    return RSTRING(ret)->len;
++    memcpy(buf, RSTRING_PTR(ret), RSTRING_LEN(ret));
++    return RSTRING_LEN(ret);
+   }
+ 
+   /* Is there anything left to read? */
+@@ -1394,17 +1397,17 @@
+ 
+   for (i = 1;i < argc; i++) {
+     Check_Type(argv[i], T_STRING);
+-    cur = STR2CSTR(argv[i]);
++    cur = StringValuePtr(argv[i]);
+     if (!rf_valid_option(cur)) {
+       rb_raise(rb_eArgError,"mount_under: \"%s\" - invalid argument.", cur);
+       return Qnil;
+     }
+-    snprintf(opts2,1024,"%s,%s",opts,STR2CSTR(argv[i]));
++    snprintf(opts2,1024,"%s,%s",opts,StringValuePtr(argv[i]));
+     strcpy(opts,opts2);
+   }
+ 
+   rb_iv_set(cFuseFS,"@mountpoint",mountpoint);
+-  fusefs_setup(STR2CSTR(mountpoint), &rf_oper, opts);
++  fusefs_setup(StringValuePtr(mountpoint), &rf_oper, opts);
+   return Qtrue;
+ }
+ 
