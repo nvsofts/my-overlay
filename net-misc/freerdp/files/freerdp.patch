@@ -1,0 +1,24 @@
+diff -ru freerdp.orig/client/X11/xf_interface.c freerdp/client/X11/xf_interface.c
+--- freerdp.orig/client/X11/xf_interface.c	2013-06-16 14:21:13.790721657 +0900
++++ freerdp/client/X11/xf_interface.c	2013-06-16 14:21:46.110724832 +0900
+@@ -860,7 +860,7 @@
+ 	xf_create_window(xfi);
+ 
+ 	ZeroMemory(&gcv, sizeof(gcv));
+-	xfi->modifier_map = XGetModifierMapping(xfi->display);
++	xfi->modifier_map = 0;
+ 
+ 	xfi->gc = XCreateGC(xfi->display, xfi->drawable, GCGraphicsExposures, &gcv);
+ 	xfi->primary = XCreatePixmap(xfi->display, xfi->drawable, xfi->width, xfi->height, xfi->depth);
+diff -ru freerdp.orig/libfreerdp/locale/keyboard_xkbfile.c freerdp/libfreerdp/locale/keyboard_xkbfile.c
+--- freerdp.orig/libfreerdp/locale/keyboard_xkbfile.c	2013-06-16 14:20:57.987720105 +0900
++++ freerdp/libfreerdp/locale/keyboard_xkbfile.c	2013-06-16 14:21:53.675725575 +0900
+@@ -55,7 +55,7 @@
+ 	{ "RTRN",	RDP_SCANCODE_RETURN}, // not KP
+ 	{ "LFSH",	RDP_SCANCODE_LSHIFT},
+ 	{ "LALT",	RDP_SCANCODE_LMENU},
+-	{ "CAPS",	RDP_SCANCODE_CAPSLOCK},
++	{ "CAPS",	RDP_SCANCODE_LCONTROL},
+ 	{ "ESC",	RDP_SCANCODE_ESCAPE},
+ 	{ "SPCE",	RDP_SCANCODE_SPACE},
+ 	{ "AE10",	RDP_SCANCODE_KEY_0},
