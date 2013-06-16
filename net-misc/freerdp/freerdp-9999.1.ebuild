@@ -75,7 +75,7 @@ DEPEND="${RDEPEND}
 DOCS=( README )
 
 src_prepare() {
-	epatch "${FILESDIR}/${P}.patch"
+	epatch "${FILESDIR}/freerdp.patch"
 }
 
 src_configure() {
