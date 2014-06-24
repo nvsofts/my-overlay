@@ -30,3 +30,6 @@ src_prepare() {
 	eautoreconf
 }
 
+pkg_preinst() {
+	rm -rf ${D}/usr/bin
+}
