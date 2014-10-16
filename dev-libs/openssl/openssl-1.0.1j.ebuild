@@ -15,7 +15,7 @@ SRC_URI="mirror://openssl/source/${P}.tar.gz
 LICENSE="openssl"
 SLOT="0"
 KEYWORDS="~alpha amd64 ~arm ~arm64 ~hppa ~ia64 ~m68k ~mips ~ppc ~ppc64 ~s390 ~sh ~sparc x86 ~amd64-fbsd ~sparc-fbsd ~x86-fbsd ~arm-linux ~x86-linux"
-IUSE="bindist gmp kerberos rfc3779 sse2 ssl3 static-libs test +tls-heartbeat vanilla zlib"
+IUSE="bindist gmp kerberos rfc3779 sse2 ssl2 ssl3 static-libs test +tls-heartbeat vanilla zlib"
 
 # The blocks are temporary just to make sure people upgrade to a
 # version that lack runtime version checking.  We'll drop them in
@@ -145,6 +145,7 @@ multilib_src_configure() {
 	./${config} \
 		${sslout} \
 		$(use sse2 || echo "no-sse2") \
+		$(use ssl2 || echo "no-ssl2") \
 		$(use ssl3 || echo "no-ssl3") \
 		enable-camellia \
 		$(use_ssl !bindist ec) \
