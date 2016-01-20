@@ -1,6 +1,6 @@
 # Copyright 1999-2015 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: /var/cvsroot/gentoo-x86/dev-java/oracle-jdk-bin/oracle-jdk-bin-1.8.0.45.ebuild,v 1.3 2015/04/17 21:22:38 ago Exp $
+# $Id$
 
 EAPI="5"
 
@@ -28,19 +28,19 @@ fi
 MY_PV="$(get_version_component_range 2)${MY_PV_EXT}"
 
 AT_amd64="jdk-${MY_PV}-linux-x64.tar.gz"
-AT_arm="jdk-${MY_PV}-linux-arm-vfp-hflt.tar.gz"
+AT_arm="jdk-${MY_PV}-linux-arm32-vfp-hflt.tar.gz"
+AT_arm64="jdk-${MY_PV}-linux-arm64-vfp-hflt.tar.gz"
 AT_x86="jdk-${MY_PV}-linux-i586.tar.gz"
 AT_x64_solaris="jdk-${MY_PV}-solaris-x64.tar.gz"
 AT_sparc64_solaris="${AT_sparc_solaris} jdk-${MY_PV}-solaris-sparcv9.tar.gz"
-AT_x86_macos="jdk-${MY_PV}-macosx-x64.dmg"
 AT_x64_macos="jdk-${MY_PV}-macosx-x64.dmg"
 
 DEMOS_amd64="jdk-${MY_PV}-linux-x64-demos.tar.gz"
-DEMOS_arm="jdk-${MY_PV}-linux-arm-vfp-hflt-demos.tar.gz"
+DEMOS_arm="jdk-${MY_PV}-linux-arm32-vfp-hflt-demos.tar.gz"
+DEMOS_arm64="jdk-${MY_PV}-linux-arm64-vfp-hflt-demos.tar.gz"
 DEMOS_x86="jdk-${MY_PV}-linux-i586-demos.tar.gz"
 DEMOS_x64_solaris="jdk-${MY_PV}-solaris-x64-demos.tar.gz"
 DEMOS_sparc64_solaris="jdk-${MY_PV}-solaris-sparcv9-demos.tar.gz"
-DEMOS_x86_macos="jdk-${MY_PV}-macosx-x86_64-demos.zip"
 DEMOS_x64_macos="jdk-${MY_PV}-macosx-x86_64-demos.zip"
 
 JCE_DIR="UnlimitedJCEPolicyJDK8"
@@ -60,32 +60,58 @@ SRC_URI+=" jce? ( ${JCE_FILE} )"
 
 LICENSE="Oracle-BCLA-JavaSE examples? ( BSD )"
 SLOT="1.8"
-KEYWORDS="amd64 x86 ~amd64-linux ~x86-linux ~x64-macos ~x86-macos ~sparc64-solaris ~x64-solaris"
-IUSE="+X alsa aqua derby doc examples +fontconfig jce nsplugin pax_kernel selinux source"
+KEYWORDS="amd64 x86 ~amd64-linux ~x86-linux ~x64-macos ~sparc64-solaris ~x64-solaris"
+IUSE="alsa +awt cups derby doc examples +fontconfig javafx jce nsplugin pax_kernel selinux source"
+REQUIRED_USE="javafx? ( alsa fontconfig )"
 
-RESTRICT="fetch strip"
+RESTRICT="fetch preserve-libs strip"
 QA_PREBUILT="*"
 
-COMMON_DEP=""
-RDEPEND="${COMMON_DEP}
-	X? ( !aqua? (
-		x11-libs/libX11:0
-		x11-libs/libXext:0
-		x11-libs/libXi:0
-		x11-libs/libXrender:0
-		x11-libs/libXtst:0
-	) )
-	alsa? ( media-libs/alsa-lib:0 )
+# NOTES:
+#
+# * cups is dlopened.
+#
+# * libpng is also dlopened but only by libsplashscreen, which isn't
+#   important, so we can exclude that.
+#
+# * We still need to work out the exact AWT and JavaFX dependencies
+#   under MacOS. It doesn't appear to use many, if any, of the
+#   dependencies below.
+#
+RDEPEND="!x64-macos? (
+		awt? (
+			x11-libs/libX11
+			x11-libs/libXext
+			x11-libs/libXi
+			x11-libs/libXrender
+		)
+		javafx? (
+			dev-libs/glib:2
+			dev-libs/libxml2:2
+			dev-libs/libxslt
+			media-libs/freetype:2
+			x11-libs/cairo
+			x11-libs/gtk+:2
+			x11-libs/libX11
+			x11-libs/libXtst
+			x11-libs/libXxf86vm
+			x11-libs/pango
+			virtual/opengl
+		)
+	)
+	alsa? ( media-libs/alsa-lib )
+	cups? ( net-print/cups )
 	doc? ( dev-java/java-sdk-docs:${SLOT} )
 	fontconfig? ( media-libs/fontconfig:1.0 )
 	!prefix? ( sys-libs/glibc:* )
 	selinux? ( sec-policy/selinux-java )"
-# A PaX header isn't created by scanelf, so depend on paxctl to avoid fallback
-# marking. See bug #427642.
-DEPEND="${COMMON_DEP}
-	jce? ( app-arch/unzip:0 )
-	examples? ( kernel_linux? ( app-arch/unzip:0 ) )
-	pax_kernel? ( sys-apps/paxctl:0 )"
+
+# A PaX header isn't created by scanelf so depend on paxctl to avoid
+# fallback marking. See bug #427642.
+DEPEND="app-arch/zip
+	jce? ( app-arch/unzip )
+	examples? ( x64-macos? ( app-arch/unzip ) )
+	pax_kernel? ( sys-apps/paxctl )"
 
 S="${WORKDIR}/jdk"
 
@@ -130,17 +156,7 @@ pkg_nofetch() {
 }
 
 src_unpack() {
-	if use arm ; then
-		# Special case for ARM soft VS hard float.
-		#if [[ ${CHOST} == *-hardfloat-* ]] ; then
-			unpack jdk-${MY_PV}-linux-arm-vfp-hflt.tar.gz
-			use examples && unpack jdk-${MY_PV}-linux-arm-vfp-hflt-demos.tar.gz
-		#else
-		#	unpack jdk-${MY_PV}-linux-arm-vfp-sflt.tar.gz
-		#	use examples && unpack jdk-${MY_PV}-linux-arm-vfp-sflt-demos.tar.gz
-		#fi
-		use jce && unpack ${JCE_FILE}
-	elif use x86-macos || use x64-macos ; then
+	if use x64-macos ; then
 		pushd "${T}" > /dev/null
 		mkdir dmgmount
 		hdiutil attach "${DISTDIR}"/jdk-${MY_PV}-macosx-x64.dmg \
@@ -164,38 +180,61 @@ src_unpack() {
 
 src_prepare() {
 	if use jce ; then
-		mv "${WORKDIR}"/${JCE_DIR} "${S}"/jre/lib/security/ || die
+		mv "${WORKDIR}"/${JCE_DIR} jre/lib/security/ || die
 	fi
+
+	if [[ -n ${JAVA_PKG_STRICT} ]] ; then
+		# Mark this binary early to run it now.
+		pax-mark Cm ./bin/javap
+
+		eqawarn "Ensure that this only calls trackJavaUsage(). If not, see bug #559936."
+		eqawarn
+		eqawarn "$(./bin/javap -J-Duser.home=${T} -c sun.misc.PostVMInitHook || die)"
+	fi
+
+	# Remove the hook that calls Oracle's evil usage tracker. Not just
+	# because it's evil but because it breaks the sandbox during builds
+	# and we can't find any other feasible way to disable it or make it
+	# write somewhere else. See bug #559936 for details.
+	zip -d jre/lib/rt.jar sun/misc/PostVMInitHook.class || die
 }
 
 src_install() {
 	local dest="/opt/${P}"
-	local ddest="${ED}${dest}"
+	local ddest="${ED}${dest#/}"
 
 	# Create files used as storage for system preferences.
 	mkdir jre/.systemPrefs || die
 	touch jre/.systemPrefs/.system.lock || die
 	touch jre/.systemPrefs/.systemRootModFile || die
 
-	# We should not need the ancient plugin for Firefox 2 anymore, plus it has
-	# writable executable segments
-	if use x86 ; then
-		rm -vf {,jre/}lib/i386/libjavaplugin_oji.so \
-			{,jre/}lib/i386/libjavaplugin_nscp*.so
-		rm -vrf jre/plugin/i386
+	if ! use alsa ; then
+		rm -vf jre/lib/*/libjsoundalsa.* || die
 	fi
 
-	# Without nsplugin flag, also remove the new plugin
-	local arch=${ARCH};
-	use x86 && arch=i386;
-	if ! use nsplugin ; then
-		rm -vf {,jre/}lib/${arch}/libnpjp2.so \
-			{,jre/}lib/${arch}/libjavaplugin_jni.so
+	if ! use awt ; then
+		rm -vf {,jre/}lib/*/lib*{[jx]awt,splashscreen}* \
+		   {,jre/}bin/{javaws,policytool} \
+		   bin/appletviewer || die
 	fi
+
+	if ! use javafx ; then
+		rm -vf jre/lib/*/lib*{decora,fx,glass,prism}* \
+		   jre/lib/*/libgstreamer-lite.* {,jre/}lib/{,ext/}*fx* \
+		   bin/*javafx* || die
+	fi
+
+	if ! use nsplugin ; then
+		rm -vf jre/lib/*/libnpjp2.* || die
+	else
+		local nsplugin=$(echo jre/lib/*/libnpjp2.*)
+	fi
+
+	# Even though plugins linked against multiple ffmpeg versions are
+	# provided, they generally lag behind what Gentoo has available.
+	rm -vf jre/lib/*/libavplugin* || die
 
 	dodoc COPYRIGHT
-	dohtml README.html
-
 	dodir "${dest}"
 	cp -pPR bin include jre lib man "${ddest}" || die
 
@@ -220,16 +259,15 @@ src_install() {
 	fi
 
 	if use nsplugin ; then
-		install_mozilla_plugin "${dest}"/jre/lib/${arch}/libnpjp2.so
+		install_mozilla_plugin "${dest}/${nsplugin}"
 	fi
 
 	if use source ; then
-		for mysrc in src javafx-src; do
-			mysrc="${mysrc}.zip"
-			ebegin "Copying source file ${mysrc}"
-			cp -p "${mysrc}" "${ddest}" || die
-			eend $?
-		done
+		cp -v src.zip "${ddest}" || die
+
+		if use javafx ; then
+			cp -v javafx-src.zip "${ddest}" || die
+		fi
 	fi
 
 	if [[ -d jre/lib/desktop ]] ; then
@@ -283,7 +321,7 @@ src_install() {
 	# Remove empty dirs we might have copied.
 	find "${D}" -type d -empty -exec rmdir -v {} + || die
 
-	if use x86-macos || use x64-macos ; then
+	if use x64-macos ; then
 		# Fix miscellaneous install_name issues.
 		pushd "${ddest}"/jre/lib > /dev/null || die
 		local lib needed nlib npath
@@ -299,7 +337,8 @@ src_install() {
 		done
 		popd > /dev/null
 
-		# TODO: This reads "jdk1{5,6}", what about "jdk1{7,8}"?
+		# This is still jdk1{5,6}, even on Java 8, so don't change it
+		# until you know different.
 		for nlib in jdk1{5,6} ; do
 			install_name_tool -change \
 				/usr/lib/libgcc_s_ppc64.1.dylib \
